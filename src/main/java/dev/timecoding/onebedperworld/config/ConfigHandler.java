@@ -25,8 +25,10 @@ public class ConfigHandler {
     public YamlConfiguration cfg = null;
 
     public void init(){
+        plugin.saveDefaultConfig();
         f = new File("plugins//OneBedPerWorld", "config.yml");
         cfg = YamlConfiguration.loadConfiguration(f);
+        cfg.options().copyDefaults(true);
     }
 
     public void save(){

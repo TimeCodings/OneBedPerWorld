@@ -12,6 +12,7 @@ import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerBedEnterEvent;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 
 import java.util.ArrayList;
@@ -23,6 +24,34 @@ public class BedListener implements Listener {
     private DataSaveHandler handler = plugin.getDataSaveHandler();
     private ConfigHandler cfg = plugin.getConfigFile();
     private boolean enabled = cfg.getConfig().getBoolean("Enabled");
+
+    @EventHandler
+    public void onWorldChange(PlayerChangedWorldEvent e){
+        Player p = e.getPlayer();
+
+        boolean enabled = cfg.getConfig().getBoolean("TeleportToSpawn.Enabled");
+        List<String> worlds = cfg.getConfig().getStringList("TeleportToSpawn.Worlds");
+        if(enabled){
+            if(worlds.contains(p.getWorld().getName())){
+                World currentworld = p.getWorld();
+
+                int x = 0;
+                if(cfg.getConfig().get("TeleportToSpawn.Modify."+currentworld.getName()+".X") != null){
+                    x = cfg.getConfig().getInt("TeleportToSpawn.Modify."+currentworld.getName()+".X");
+                }
+                int y = 0;
+                if(cfg.getConfig().get("TeleportToSpawn.Modify."+currentworld.getName()+".Y") != null){
+                    y = cfg.getConfig().getInt("TeleportToSpawn.Modify."+currentworld.getName()+".Y");
+                }
+                int z = 0;
+                if(cfg.getConfig().get("TeleportToSpawn.Modify."+currentworld.getName()+".Z") != null){
+                    z = cfg.getConfig().getInt("TeleportToSpawn.Modify."+currentworld.getName()+".Z");
+                }
+
+                p.teleport(new Location(currentworld.getSpawnLocation().getWorld(), currentworld.getSpawnLocation().getX()+x, currentworld.getSpawnLocation().getY()+y, currentworld.getSpawnLocation().getZ()+z));
+            }
+        }
+    }
 
     @EventHandler
     public void onBedEnter(PlayerBedEnterEvent e){
@@ -60,6 +89,9 @@ public class BedListener implements Listener {
             boolean triggerevent = cfg.getConfig().getBoolean("BlacklistedWorlds.TriggerEvent");
             boolean blockdefaultrespawn = cfg.getConfig().getBoolean("BedNotExists.BlockDefaultRespawn");
 
+            boolean onlyiffailed = cfg.getConfig().getBoolean("BedNotExists.RespawnWorld.OnlyIfTTRFailed");
+            String respawnworld = cfg.getConfig().getString("BedNotExists.RespawnWorld.World");
+
             if(!onBlacklist(w.getName())) {
                 if (handler.readAllBedWorldNames(p).size() != 0) {
                     if (handler.bedLocationExists(p, w)) {
@@ -69,7 +101,11 @@ public class BedListener implements Listener {
                             loc = performBedNotExists(p);
                             if (loc != null) {
                                 e.setRespawnLocation(loc);
-                                p.sendMessage(getMessage("SpareBedFound").replace("%world%", loc.getWorld().getName()).replace("%player%", p.getName()));
+                                if(onlyiffailed && handler.readBedLocation(p,loc.getWorld()) == null || !onlyiffailed || onlyiffailed && handler.readBedLocation(p,loc.getWorld()).equals(loc)) {
+                                    p.sendMessage(getMessage("WorldRespawnPointFound").replace("%world%", loc.getWorld().getName()).replace("%player%", p.getName()));
+                                }else {
+                                    p.sendMessage(getMessage("SpareBedFound").replace("%world%", loc.getWorld().getName()).replace("%player%", p.getName()));
+                                }
                             }else if(blockdefaultrespawn){
                                 e.setRespawnLocation(p.getLocation());
                             }
@@ -89,7 +125,11 @@ public class BedListener implements Listener {
                 Location loc = performBedNotExists(p);
                 if (loc != null) {
                     e.setRespawnLocation(loc);
-                    p.sendMessage(getMessage("SpareBedFound").replace("%world%", loc.getWorld().getName()).replace("%player%", p.getName()));
+                    if(onlyiffailed && handler.readBedLocation(p,loc.getWorld()) == null || !onlyiffailed || onlyiffailed && handler.readBedLocation(p,loc.getWorld()).equals(loc)) {
+                        p.sendMessage(getMessage("WorldRespawnPointFound").replace("%world%", loc.getWorld().getName()).replace("%player%", p.getName()));
+                    }else {
+                        p.sendMessage(getMessage("SpareBedFound").replace("%world%", loc.getWorld().getName()).replace("%player%", p.getName()));
+                    }
                 }else if(blockdefaultrespawn){
                     e.setRespawnLocation(p.getLocation());
                 }
@@ -115,11 +155,13 @@ public class BedListener implements Listener {
         List<String> tryworlds = cfg.getConfig().getStringList("BedNotExists.TryToRespawn.Worlds");
         boolean respawnIfDestroyed = cfg.getConfig().getBoolean("RespawnIfDestroyed");
         boolean allworlds = cfg.getConfig().getBoolean("BedNotExists.TryToRespawn.AllWorlds");
+        boolean onlyiffailed = cfg.getConfig().getBoolean("BedNotExists.RespawnWorld.OnlyIfTTRFailed");
+        String respawnworld = cfg.getConfig().getString("BedNotExists.RespawnWorld.World");
         if (blockdefaultrespawn) {
             boolean commandenabled = cfg.getConfig().getBoolean("BedNotExists.Command.Enabled");
             if(commandenabled){
                 boolean consolecommandenabbled = cfg.getConfig().getBoolean("BedNotExists.Command.Console");
-                String commandtext = cfg.getConfig().getString("BedNotExists.Command.Text").replace("/", "");
+                String commandtext = cfg.getConfig().getString("BedNotExists.Command.Text").replace("/", "").replace("%player%", p.getName());
                 if(consolecommandenabbled){
                     Bukkit.dispatchCommand(plugin.getServer().getConsoleSender(), commandtext);
                 }else{
@@ -127,9 +169,9 @@ public class BedListener implements Listener {
                 }
             }
             Location loc = null;
+            boolean found = false;
             if (trytorespawn) {
                     World first = null;
-                    boolean found = false;
                     List<String> getter = null;
                     if(allworlds){
                         getter = handler.readAllBedWorldNames(p);
@@ -139,17 +181,23 @@ public class BedListener implements Listener {
                     for (String w : getter) {
                         if (Bukkit.getWorld(w) != null && !found) {
                             loc = handler.readBedLocation(p, handler.worldNameToWorld(w));
-                            if (loc.getBlock().getType().toString().endsWith("BED") || !loc.getBlock().getType().toString().endsWith("BED") && respawnIfDestroyed) {
-                                loc = respawnToNext(loc);
-                                found = true;
-                            }else{
-                                loc = null;
+                            if(loc != null) {
+                                if (loc.getBlock().getType().toString().endsWith("BED") || !loc.getBlock().getType().toString().endsWith("BED") && respawnIfDestroyed) {
+                                    loc = respawnToNext(loc);
+                                    found = true;
+                                } else {
+                                    loc = null;
+                                }
                             }
                         }
                     }
                     if(!found){
                         p.sendMessage(getMessage("NoOtherWorldBedFound").replace("%player%", p.getName()));
                     }
+            }
+            if(onlyiffailed && !found || !onlyiffailed){
+                World newworld = Bukkit.getWorld(respawnworld);
+                loc = newworld.getSpawnLocation();
             }
 
             return loc;

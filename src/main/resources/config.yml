@@ -33,7 +33,7 @@ BlacklistedWorlds:
 #This actions will happen if the player has no bed in this world
 BedNotExists:
   #Change this to "false" if you want to respawn in the last bed in the overworld (default like vanilla)
-  #IMPORTANT: If you disable this the options TryToRespawn and Command wont work anymore
+  #IMPORTANT: If you disable this the options TryToRespawn, RespawnWorld and Command wont work anymore
   BlockDefaultRespawn: true
   #If the player can't respawn (for example because the bed is destroyed) (and BlockDefaultRespawn is enabled) the plugin will search
   #after the player bets in the worlds listed below, which can be added, and respawns there.
@@ -45,6 +45,12 @@ BedNotExists:
     #Select specific worlds
     Worlds:
       - world
+  #Set a respawn world where the player respawns if he died (default minecraft respawnpoint)
+  RespawnWorld:
+    #Trigger this only if TryToRespawn failed
+    OnlyIfTTRFailed: true
+    #Set the world where the player should respawn
+    World: world
   #Enable a Command which should be sent
   Command:
     #Enable this option
@@ -87,6 +93,7 @@ Messages:
   SpareBedFound: "&aSince a spare bed was found in the world &e%world%&a, you have now been teleported to it!"
   BedInWorldNotExists: "&cI Cannot teleport you to a bed in the world &4%world%&c, because you don't own one!"
   SleepBlacklist: "&cThe respawn point could not be set because this world is blacklisted!"
+  WorldRespawnPointFound: "&aSince a default respawnpoint was found in the world &e%world%&a, you have now been teleported to it!"
   #Removed Placeholder here: %coordinates%, %world%
   NoOtherWorldBedFound: "&cSince no beds were found in any of the other worlds entered in the config, no action is now taken!"
   NoBedExists: "&cI Cannot teleport you to a bed in any world, because you don't own one!"
@@ -94,6 +101,28 @@ Messages:
   NoPermission: "&cYou do not have the permission to execute this command!"
   #Added Placeholders here: %syntax%
   WrongSyntax: "&cPlease use: &4%syntax%"
+
+#IMPORTANT: THIS IS A BUGFIX
+#If you enter a world that is in this list, you will be teleported to the spawnpoint to fix the bug! (with the modified coordinates)
+TeleportToSpawn:
+  #Enable this feature RECOMMENDED
+  Enabled: true
+  #Modify the coordinates
+  #+1 number = +1 block away
+  #To MODIFY the worlds you need to change the coordinates like in the working example below
+  Modify:
+    world_the_end:
+      X: 0
+      Y: 0
+      Z: 4
+    world_nether:
+      X: 0
+      Y: 0
+      Z: 0
+  #Change the worlds
+  Worlds:
+    - world_the_end
+    - world_nether
 
 #You can find all BedEnterResults here: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/event/player/PlayerBedEnterEvent.BedEnterResult.html
 #What does this mean: You can decide if you can set the respawn point for example on day or only if you're able to sleep (default)
@@ -108,4 +137,4 @@ AutoUpdater: true
 
 #DO NOT CHANGE THIS
 #IF YOU CHANGE THIS THE WHOLE CONFIG WILL BE RESET
-config-version: 1.0.0
+config-version: 1.0.1

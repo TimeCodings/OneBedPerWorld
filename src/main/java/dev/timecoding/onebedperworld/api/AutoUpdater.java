@@ -24,7 +24,7 @@ public class AutoUpdater {
     private boolean sent = false;
 
     //CHANGE THIS EVERY VERSION EVERY CONFIGUPDATE
-    private String newconfigversion = "1.0.0";
+    private String newconfigversion = "1.0.1";
 
 
     public AutoUpdater(OneBedPerWorld plugin){

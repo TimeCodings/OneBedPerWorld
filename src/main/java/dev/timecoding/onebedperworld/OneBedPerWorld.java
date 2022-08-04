@@ -22,9 +22,10 @@ public final class OneBedPerWorld extends JavaPlugin {
     @Override
     public void onEnable() {
         Bukkit.getConsoleSender().sendMessage(ChatColor.YELLOW+"OneBedPerWorld "+ChatColor.GREEN+"up and running "+ChatColor.RED+"v"+getDescription().getVersion());
-        configHandler.init();
-        dataSaveHandler.init();
         plugin = this;
+        configHandler.init();
+        configHandler.reload();
+        dataSaveHandler.init();
         getServer().getPluginManager().registerEvents(new BedListener(), plugin);
         getCommand("onebedperworld").setExecutor(new OBPWCommand());
         getCommand("onebedperworld").setTabCompleter(new OBPWCompleter());
