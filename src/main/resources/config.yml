@@ -1,0 +1,111 @@
+###########################################################################################################################
+# ░█████╗░███╗░░██╗███████╗██████╗░███████╗██████╗░██████╗░███████╗██████╗░░██╗░░░░░░░██╗░█████╗░██████╗░██╗░░░░░██████╗░ #
+# ██╔══██╗████╗░██║██╔════╝██╔══██╗██╔════╝██╔══██╗██╔══██╗██╔════╝██╔══██╗░██║░░██╗░░██║██╔══██╗██╔══██╗██║░░░░░██╔══██╗ #
+# ██║░░██║██╔██╗██║█████╗░░██████╦╝█████╗░░██║░░██║██████╔╝█████╗░░██████╔╝░╚██╗████╗██╔╝██║░░██║██████╔╝██║░░░░░██║░░██║ #
+# ██║░░██║██║╚████║██╔══╝░░██╔══██╗██╔══╝░░██║░░██║██╔═══╝░██╔══╝░░██╔══██╗░░████╔═████║░██║░░██║██╔══██╗██║░░░░░██║░░██║ #
+# ╚█████╔╝██║░╚███║███████╗██████╦╝███████╗██████╔╝██║░░░░░███████╗██║░░██║░░╚██╔╝░╚██╔╝░╚█████╔╝██║░░██║███████╗██████╔╝ #
+# ░╚════╝░╚═╝░░╚══╝╚══════╝╚═════╝░╚══════╝╚═════╝░╚═╝░░░░░╚══════╝╚═╝░░╚═╝░░░╚═╝░░░╚═╝░░░╚════╝░╚═╝░░╚═╝╚══════╝╚═════╝░ #
+###########################################################################################################################
+
+#Change this to "false" if you want to disable the plugin
+Enabled: true
+
+#Change this to "false" if you want to respawn ON the bed
+RespawnNextToBed: true
+
+#Change this to "true" if you want, that if your respawn-bed got destroyed you can still respawn there
+RespawnIfDestroyed: false
+
+#Change the Blacklisted worlds (if you add one to the list it isnt possible to use this system in this world
+BlacklistedWorlds:
+  #Change this to "false" if you want to disable this option
+  Enabled: true
+  #If you enable this the blacklist will turn to a whitelist
+  ToWhitelist: false
+  #If you die in a blacklisted world the BEDNOTEXISTS Event will get triggered
+  #If you disable this the default Minecraft action is performed
+  TriggerEvent: true
+  #List of the blacklisted/whitelisted worlds
+  Worlds:
+    - world_nether
+    - world_the_end
+
+#This actions will happen if the player has no bed in this world
+BedNotExists:
+  #Change this to "false" if you want to respawn in the last bed in the overworld (default like vanilla)
+  #IMPORTANT: If you disable this the options TryToRespawn and Command wont work anymore
+  BlockDefaultRespawn: true
+  #If the player can't respawn (for example because the bed is destroyed) (and BlockDefaultRespawn is enabled) the plugin will search
+  #after the player bets in the worlds listed below, which can be added, and respawns there.
+  TryToRespawn:
+    #Enable this function
+    Enabled: true
+    #If you set this to "true" the plugin will try to find a bed in all existing worlds
+    AllWorlds: false
+    #Select specific worlds
+    Worlds:
+      - world
+  #Enable a Command which should be sent
+  Command:
+    #Enable this option
+    Enabled: false
+    #Change this to "true" if you want to send the command in the console
+    Console: false
+    #Set the command which should be sent (for example /spawn to get back to the spawn)
+    Text: "/spawn"
+
+#All beds in both the Nether and End explode when clicked. This can be disabled with this option!
+DisableBedExplosions:
+  #Enable this function
+  Enabled: true
+  #If you want to sleep in the nether a respawnpoint will get set! (The Nether/End don't use the minecraft time system)
+  TriggerRespawnSystem: true
+  #Disable all BED explosions in worlds where beds can explode (for example in the nether)
+  Worlds:
+    - world_nether
+    - world_the_end
+
+#Change the command messages and permissions
+Commands:
+  #Command: /obpw reload
+  reload:
+    Permission: obpw.reload
+    Message: "&aThe config got reloaded!"
+  #Command: /obpw help
+  help:
+    Permission: obpw.help
+    Message: "&eCommands: &a/obpw reload, /obpw help"
+
+#Change all messages of this plugin
+Messages:
+  #Default Placeholders: %world%, %coordinates%, %player%
+  Respawn: "&aYou have been teleported back to the bed in the world &e%world% &abecause you &cdied!"
+  SpawnPointSet: "&aThe Respawnpoint for the world &e%world% &ahas been set"
+  BedDestroyed: "&cYou could not be teleported to the bed in the world &4%world% &cbecause it was destroyed!"
+  #Removed Placeholder here: %coordinates%
+  OnBlacklist: "&cYou could not be teleported to the bed in the world &4%world% &cbecause the world is blacklisted!"
+  SpareBedFound: "&aSince a spare bed was found in the world &e%world%&a, you have now been teleported to it!"
+  BedInWorldNotExists: "&cI Cannot teleport you to a bed in the world &4%world%&c, because you don't own one!"
+  SleepBlacklist: "&cThe respawn point could not be set because this world is blacklisted!"
+  #Removed Placeholder here: %coordinates%, %world%
+  NoOtherWorldBedFound: "&cSince no beds were found in any of the other worlds entered in the config, no action is now taken!"
+  NoBedExists: "&cI Cannot teleport you to a bed in any world, because you don't own one!"
+  #Added Placeholders here: %permission%
+  NoPermission: "&cYou do not have the permission to execute this command!"
+  #Added Placeholders here: %syntax%
+  WrongSyntax: "&cPlease use: &4%syntax%"
+
+#You can find all BedEnterResults here: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/event/player/PlayerBedEnterEvent.BedEnterResult.html
+#What does this mean: You can decide if you can set the respawn point for example on day or only if you're able to sleep (default)
+ValidResults:
+  - OK
+
+#Change this if you don't want to send feedback to the developer
+bStats: true
+
+#Change this to "false" if all future updates should no longer be downloaded automatically
+AutoUpdater: true
+
+#DO NOT CHANGE THIS
+#IF YOU CHANGE THIS THE WHOLE CONFIG WILL BE RESET
+config-version: 1.0.0

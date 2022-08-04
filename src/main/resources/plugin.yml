@@ -1,0 +1,14 @@
+name: OneBedPerWorld
+version: 1.0
+main: dev.timecoding.onebedperworld.OneBedPerWorld
+api-version: 1.13
+authors: [ TimeCoding ]
+description: You're able to have one bed per world
+website: timecodeyt.de
+
+commands:
+  onebedperworld:
+    aliases:
+      - obpw
+    description: This command is for reloading the OneBedPerWorld Config!
+
