@@ -1,3 +1,4 @@
+[![CodeFactor](https://www.codefactor.io/repository/github/timecodings/onebedperworld/badge)](https://www.codefactor.io/repository/github/timecodings/onebedperworld)
 # OneBedPerWorld
 You're able to have one bed per world
 
