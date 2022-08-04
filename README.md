@@ -9,3 +9,5 @@ Features:
 • Modify the default Minecraft RespawnSystem
 • Add Blacklisted/Whitelisted Worlds
 • Decide if players can sleep in the Nether and the End
+
+Spigot-Site: https://www.spigotmc.org/resources/onebedperworld.104065/
