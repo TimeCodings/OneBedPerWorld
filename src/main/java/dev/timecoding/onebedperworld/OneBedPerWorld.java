@@ -14,8 +14,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class OneBedPerWorld extends JavaPlugin {
 
     private static OneBedPerWorld plugin;
-    private DataSaveHandler dataSaveHandler = new DataSaveHandler(this);;
-    private ConfigHandler configHandler = new ConfigHandler(this);;
+    private DataSaveHandler dataSaveHandler = new DataSaveHandler(this);
+    private ConfigHandler configHandler = new ConfigHandler(this);
 
     private AutoUpdater updater = null;
 
