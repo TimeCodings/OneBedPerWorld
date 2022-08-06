@@ -7,12 +7,18 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.type.RespawnAnchor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 
 import java.util.ArrayList;
@@ -89,49 +95,201 @@ public class BedListener implements Listener {
             boolean triggerevent = cfg.getConfig().getBoolean("BlacklistedWorlds.TriggerEvent");
             boolean blockdefaultrespawn = cfg.getConfig().getBoolean("BedNotExists.BlockDefaultRespawn");
 
+            boolean priority = cfg.getConfig().getBoolean("RespawnAnchor.Priority");
+            boolean samecoordinate = cfg.getConfig().getBoolean("BedNotExists.SameCoordinate");
+
+            boolean fallbackworldenabled = cfg.getConfig().getBoolean("BedNotExists.RespawnWorld.Enabled");
             boolean onlyiffailed = cfg.getConfig().getBoolean("BedNotExists.RespawnWorld.OnlyIfTTRFailed");
             String respawnworld = cfg.getConfig().getString("BedNotExists.RespawnWorld.World");
 
-            if(!onBlacklist(w.getName())) {
-                if (handler.readAllBedWorldNames(p).size() != 0) {
-                    if (handler.bedLocationExists(p, w)) {
-                        Location loc = handler.readBedLocation(p, w);
-                        if (!loc.getBlock().getType().toString().endsWith("BED") && !respawnIfDestroyed) {
-                            p.sendMessage(getMessage("BedDestroyed").replace("%world%", w.getName()).replace("%player%", p.getName()).replace("%coordinates%", loc.getBlockX() + " " + loc.getBlockY() + " " + loc.getBlockZ()));
-                            loc = performBedNotExists(p);
-                            if (loc != null) {
-                                e.setRespawnLocation(loc);
-                                if(onlyiffailed && handler.readBedLocation(p,loc.getWorld()) == null || !onlyiffailed || onlyiffailed && handler.readBedLocation(p,loc.getWorld()).equals(loc)) {
-                                    p.sendMessage(getMessage("WorldRespawnPointFound").replace("%world%", loc.getWorld().getName()).replace("%player%", p.getName()));
-                                }else {
-                                    p.sendMessage(getMessage("SpareBedFound").replace("%world%", loc.getWorld().getName()).replace("%player%", p.getName()));
+            boolean prefernether = cfg.getConfig().getBoolean("RespawnAnchor.PreferNether");
+
+            boolean anchorenabled = cfg.getConfig().getBoolean("RespawnAnchor.Enabled");
+
+            boolean anchorok = false;
+
+            Location filoc = null;
+            if(handler.anchorLocationExists(p, w)) {
+                if(prefernether){
+                    for(String aw : handler.readAllAnchorWorldNames(p)){
+                        if(Bukkit.getWorld(aw) != null && Bukkit.getWorld(aw).getEnvironment().equals(World.Environment.NETHER)){
+                            Location nloc = handler.readAnchorLocation(p, handler.worldNameToWorld(aw));
+                            if(nloc != null && nloc.getBlock().getType().equals(Material.RESPAWN_ANCHOR)){
+                                filoc = nloc;
+                                anchorok = true;
+                            }
+                        }
+                    }
+                }
+                Location loc = null;
+                if(!prefernether || !anchorok) {
+                    filoc = handler.readAnchorLocation(p, w);
+                    if (filoc != null && filoc.getBlock().getType().equals(Material.RESPAWN_ANCHOR)) {
+                        RespawnAnchor anchor = handler.getRespawnAnchor(filoc);
+                        if (anchor.getCharges() >= 1) {
+                            anchor.setCharges((anchor.getCharges()-1));
+                            Block b = filoc.getBlock();
+                            b.setBlockData((BlockData) anchor);
+                            filoc = respawnToNext(filoc);
+                            anchorok = true;
+                        }
+                    }
+                }
+            }
+
+
+            Location loc = null;
+            if(!priority || priority && !anchorok) {
+                if (!onBlacklist(w.getName())) {
+                    if (handler.readAllBedWorldNames(p).size() != 0) {
+                        if (handler.bedLocationExists(p, w)) {
+                            loc = handler.readBedLocation(p, w);
+                            if (!loc.getBlock().getType().toString().endsWith("BED") && !respawnIfDestroyed) {
+                                p.sendMessage(getMessage("BedDestroyed").replace("%world%", w.getName()).replace("%player%", p.getName()).replace("%coordinates%", loc.getBlockX() + " " + loc.getBlockY() + " " + loc.getBlockZ()));
+                                loc = performBedNotExists(p);
+                                if (loc != null) {
+                                    e.setRespawnLocation(loc);
+                                    if (onlyiffailed && handler.readBedLocation(p, loc.getWorld()) == null && fallbackworldenabled || !onlyiffailed && fallbackworldenabled || onlyiffailed && handler.readBedLocation(p, loc.getWorld()).equals(loc) && fallbackworldenabled) {
+                                        p.sendMessage(getMessage("WorldRespawnPointFound").replace("%world%", loc.getWorld().getName()).replace("%player%", p.getName()));
+                                    } else {
+                                        p.sendMessage(getMessage("SpareBedFound").replace("%world%", loc.getWorld().getName()).replace("%player%", p.getName()));
+                                    }
+                                } else if (blockdefaultrespawn) {
+                                    e.setRespawnLocation(p.getLocation());
                                 }
-                            }else if(blockdefaultrespawn){
-                                e.setRespawnLocation(p.getLocation());
+                            } else {
+                                loc = respawnToNext(loc);
+                                e.setRespawnLocation(loc);
+                                p.sendMessage(getMessage("Respawn").replace("%world%", w.getName()).replace("%player%", p.getName()).replace("%coordinates%", loc.getBlockX() + " " + loc.getBlockY() + " " + loc.getBlockZ()));
                             }
                         } else {
-                            loc = respawnToNext(loc);
-                            e.setRespawnLocation(loc);
-                            p.sendMessage(getMessage("Respawn").replace("%world%", w.getName()).replace("%player%", p.getName()).replace("%coordinates%", loc.getBlockX() + " " + loc.getBlockY() + " " + loc.getBlockZ()));
+                            if (Bukkit.getWorld(respawnworld) != null && fallbackworldenabled) {
+                                p.sendMessage(getMessage("WorldRespawnPointFound").replace("%world%", w.getName()).replace("%player%", p.getName()));
+                                e.setRespawnLocation(Bukkit.getWorld(respawnworld).getSpawnLocation());
+                            } else {
+                                p.sendMessage(getMessage("BedInWorldNotExists").replace("%world%", w.getName()).replace("%player%", p.getName()));
+                                if (samecoordinate) {
+                                    e.setRespawnLocation(p.getLocation());
+                                }
+                            }
                         }
-                    }else{
-                        p.sendMessage(getMessage("BedInWorldNotExists").replace("%world%", w.getName()).replace("%player%", p.getName()));
+                    } else {
+                        if (Bukkit.getWorld(respawnworld) != null && fallbackworldenabled) {
+                            p.sendMessage(getMessage("WorldRespawnPointFound").replace("%world%", w.getName()).replace("%player%", p.getName()));
+                            e.setRespawnLocation(Bukkit.getWorld(respawnworld).getSpawnLocation());
+                        } else {
+                            p.sendMessage(getMessage("NoBedExists").replace("%player%", p.getName()));
+                            if (samecoordinate) {
+                                e.setRespawnLocation(p.getLocation());
+                            }
+                        }
                     }
-                }else{
-                    p.sendMessage(getMessage("NoBedExists").replace("%player%", p.getName()));
+                } else {
+                    p.sendMessage(getMessage("OnBlacklist").replace("%world%", w.getName()).replace("%player%", p.getName()));
+                    loc = performBedNotExists(p);
+                    if (loc != null) {
+                        e.setRespawnLocation(loc);
+                        if (onlyiffailed && handler.readBedLocation(p, loc.getWorld()) == null || !onlyiffailed || onlyiffailed && handler.readBedLocation(p, loc.getWorld()).equals(loc)) {
+                            p.sendMessage(getMessage("WorldRespawnPointFound").replace("%world%", loc.getWorld().getName()).replace("%player%", p.getName()));
+                        } else {
+                            p.sendMessage(getMessage("SpareBedFound").replace("%world%", loc.getWorld().getName()).replace("%player%", p.getName()));
+                        }
+                    } else if (blockdefaultrespawn) {
+                        e.setRespawnLocation(p.getLocation());
+                    }
                 }
-            }else{
-                p.sendMessage(getMessage("OnBlacklist").replace("%world%", w.getName()).replace("%player%", p.getName()));
-                Location loc = performBedNotExists(p);
-                if (loc != null) {
-                    e.setRespawnLocation(loc);
-                    if(onlyiffailed && handler.readBedLocation(p,loc.getWorld()) == null || !onlyiffailed || onlyiffailed && handler.readBedLocation(p,loc.getWorld()).equals(loc)) {
-                        p.sendMessage(getMessage("WorldRespawnPointFound").replace("%world%", loc.getWorld().getName()).replace("%player%", p.getName()));
-                    }else {
-                        p.sendMessage(getMessage("SpareBedFound").replace("%world%", loc.getWorld().getName()).replace("%player%", p.getName()));
+            }
+            if(loc != null && !priority){
+                e.setRespawnLocation(loc);
+            }else if(anchorok && priority){
+                e.setRespawnLocation(filoc);
+            }else if(loc == null && anchorok){
+                e.setRespawnLocation(filoc);
+            }else if(!anchorok && priority && loc != null){
+                e.setRespawnLocation(loc);
+            }
+        }
+    }
+
+    @EventHandler
+    public void onBlockPlace(BlockPlaceEvent e){
+        Player p = e.getPlayer();
+        World w = p.getWorld();
+        Block b = e.getBlockPlaced();
+        if(b.getType() == Material.RESPAWN_ANCHOR) {
+            boolean anchorenabled = cfg.getConfig().getBoolean("RespawnAnchor.Enabled");
+            boolean naturally = cfg.getConfig().getBoolean("RespawnAnchor.Naturally");
+            String anchorcancelmessage = getMessage("CantUseRA").replace("%player%", p.getName()).replace("%world%", w.getName());
+            if (anchorenabled) {
+                boolean inside = cfg.getConfig().getBoolean("RespawnAnchor.InsideNether");
+                boolean outside = cfg.getConfig().getBoolean("RespawnAnchor.OutsideNether.Enabled");
+                if(!inside && w.getEnvironment().equals(World.Environment.NETHER)){
+                    e.setCancelled(true);
+                }
+                List<String> list = cfg.getConfig().getStringList("RespawnAnchor.OutsideNether.Worlds");
+                if(outside){
+                    if(!list.contains(w.getName())){
+                        if(inside && !w.getEnvironment().equals(World.Environment.NETHER)) {
+                            e.setCancelled(true);
+                        }
                     }
-                }else if(blockdefaultrespawn){
-                    e.setRespawnLocation(p.getLocation());
+                }else if(list.contains(w.getName())){
+                    e.setCancelled(true);
+                }
+
+                if(e.isCancelled() && !naturally){
+                    p.sendMessage(anchorcancelmessage);
+                }else if(e.isCancelled() && naturally){
+                    e.setCancelled(false);
+                }
+            } else if(!naturally){
+                e.setCancelled(true);
+                p.sendMessage(anchorcancelmessage);
+            }
+        }
+    }
+
+    @EventHandler
+    public void onInteract(PlayerInteractEvent e){
+        Player p = e.getPlayer();
+        Action a = e.getAction();
+        World w = p.getWorld();
+        boolean inside = cfg.getConfig().getBoolean("RespawnAnchor.InsideNether");
+        boolean outside = cfg.getConfig().getBoolean("RespawnAnchor.OutsideNether.Enabled");
+        if(a.equals(Action.RIGHT_CLICK_BLOCK) && e.getClickedBlock().getType() == Material.RESPAWN_ANCHOR){
+            int charge = handler.getRespawnAnchor(e.getClickedBlock().getLocation()).getCharges();
+            boolean anchorenabled = cfg.getConfig().getBoolean("RespawnAnchor.Enabled");
+            boolean outsideenabled = cfg.getConfig().getBoolean("RespawnAnchor.OutsideNether.Enabled");
+
+            List<String> worlds = cfg.getConfig().getStringList("RespawnAnchor.OutsideNether.Worlds");
+            if(!inside && w.getEnvironment().equals(World.Environment.NETHER)){
+                e.setCancelled(true);
+            }
+            List<String> list = cfg.getConfig().getStringList("RespawnAnchor.OutsideNether.Worlds");
+            if(outside){
+                if(!list.contains(w.getName())){
+                    if(inside && !w.getEnvironment().equals(World.Environment.NETHER)) {
+                        e.setCancelled(true);
+                    }
+                }
+            }else if(list.contains(w.getName())){
+                e.setCancelled(true);
+            }
+            if(anchorenabled && charge == 4) {
+                boolean b = false;
+                Location loc = e.getClickedBlock().getLocation();
+                Block block = loc.getBlock();
+                if(outsideenabled && worlds.contains(w.getName())) {
+                    e.setCancelled(true);
+                    b = true;
+                }else if(inside && w.getEnvironment().equals(World.Environment.NETHER)) {
+                    b = true;
+                }else if(!outsideenabled && !worlds.contains(w.getName())){
+                    b = true;
+                }
+                if(b){
+                    p.sendMessage(getMessage("SpawnPointSet").replace("%world%", w.getName()).replace("%player%", p.getName()).replace("%coordinates%", loc.getBlockX() + " " + loc.getBlockY() + " " + loc.getBlockZ()));
+                    handler.setAnchorLocation(p, e.getClickedBlock().getLocation().getBlock());
                 }
             }
         }

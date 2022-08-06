@@ -11,6 +11,7 @@
 Enabled: true
 
 #Change this to "false" if you want to respawn ON the bed
+#This option also applies to the RespawnAnchor if the option below has been activated!
 RespawnNextToBed: true
 
 #Change this to "true" if you want, that if your respawn-bed got destroyed you can still respawn there
@@ -35,6 +36,8 @@ BedNotExists:
   #Change this to "false" if you want to respawn in the last bed in the overworld (default like vanilla)
   #IMPORTANT: If you disable this the options TryToRespawn, RespawnWorld and Command wont work anymore
   BlockDefaultRespawn: true
+  #If all fails you get teleported to the exact point you died (not recommended, because you could respawn in lava)
+  SameCoordinate: false
   #If the player can't respawn (for example because the bed is destroyed) (and BlockDefaultRespawn is enabled) the plugin will search
   #after the player bets in the worlds listed below, which can be added, and respawns there.
   TryToRespawn:
@@ -47,6 +50,9 @@ BedNotExists:
       - world
   #Set a respawn world where the player respawns if he died (default minecraft respawnpoint)
   RespawnWorld:
+    #Change this to "false" if you don't want to set a default respawn world
+    #NOT RECOMMENDED TO CHANGE!!!
+    Enabled: true
     #Trigger this only if TryToRespawn failed
     OnlyIfTTRFailed: true
     #Set the world where the player should respawn
@@ -81,26 +87,55 @@ Commands:
   help:
     Permission: obpw.help
     Message: "&eCommands: &a/obpw reload, /obpw help"
+  #Command: /obpw deletecache <Player> <Type> <World>
+  deletecache:
+    Permission: obpw.cache
+    #Placeholders: %player%, %type%, %world%
+    Message: "&eThe %type%-Cache of the player &a%player% &ein the world &f%world% &ehas been deleted!"
 
 #Change all messages of this plugin
 Messages:
   #Default Placeholders: %world%, %coordinates%, %player%
   Respawn: "&aYou have been teleported back to the bed in the world &e%world% &abecause you &cdied!"
   SpawnPointSet: "&aThe Respawnpoint for the world &e%world% &ahas been set"
-  BedDestroyed: "&cYou could not be teleported to the bed in the world &4%world% &cbecause it was destroyed!"
+  BedDestroyed: "&cYou could not be teleported to the bed/respawnanchor in the world &4%world% &cbecause it was destroyed!"
   #Removed Placeholder here: %coordinates%
-  OnBlacklist: "&cYou could not be teleported to the bed in the world &4%world% &cbecause the world is blacklisted!"
+  OnBlacklist: "&cYou could not be teleported to the bed/respawnanchor in the world &4%world% &cbecause the world is blacklisted!"
   SpareBedFound: "&aSince a spare bed was found in the world &e%world%&a, you have now been teleported to it!"
-  BedInWorldNotExists: "&cI Cannot teleport you to a bed in the world &4%world%&c, because you don't own one!"
+  BedInWorldNotExists: "&cI Cannot teleport you to a bed/respawnanchor in the world &4%world%&c, because you don't own one!"
   SleepBlacklist: "&cThe respawn point could not be set because this world is blacklisted!"
   WorldRespawnPointFound: "&aSince a default respawnpoint was found in the world &e%world%&a, you have now been teleported to it!"
+  CantUseRA: "&cYou are not able to use a RespawnAnchor in this world!"
   #Removed Placeholder here: %coordinates%, %world%
-  NoOtherWorldBedFound: "&cSince no beds were found in any of the other worlds entered in the config, no action is now taken!"
-  NoBedExists: "&cI Cannot teleport you to a bed in any world, because you don't own one!"
+  NoOtherWorldBedFound: "&cSince no beds/respawnanchors were found in any of the other worlds entered in the config, no action is now taken!"
+  NoBedExists: "&cI Cannot teleport you to a bed/respawnanchor in any world, because you don't own one!"
   #Added Placeholders here: %permission%
   NoPermission: "&cYou do not have the permission to execute this command!"
   #Added Placeholders here: %syntax%
   WrongSyntax: "&cPlease use: &4%syntax%"
+
+#This is the option for the RespawnAnchor
+#In this option you can disable, enable and change the functions of this item
+RespawnAnchor:
+  #If you set this to "false" you wont be able to use the RespawnAnchor in ANY world (also the nether)
+  Enabled: true
+  #IF YOU SET THIS TO "TRUE" YOU WILL ALWAYS GET TELEPORTED TO THE RESPAWNANCHOR INSTEAD OF THE BED WHEN IT IS CHARGED
+  Priority: false
+  #If the player isnt in the nether, should the player be teleported to the nether or should he stay in the world
+  #and get teleported to the Anchor in his world? "false" for yes (Only if OutsideNether is enabled)
+  PreferNether: true
+  #If you set this to "false" you wont be able to place/use respawnanchors in the netherworld again
+  InsideNether: true
+  #Blocked Worlds: In All worlds which are listed in this list below you CANT PLACE the respawn-anchor anymore
+  OutsideNether:
+    #If you set this to "false" you wont be able to place anchors in this worlds (like blacklist)
+    Enabled: false
+    #WorldList: Youre able, if the worldname is on this list, to place, use and charge the RespawnAnchor in this worlds
+    Worlds:
+      - world_the_end
+  #If you set this to true, the respawn-anchors will use the default minecraft block explode system,
+  #THAT MEANS: If one of the "Enabled" options is set to false, the respawn anchor is not blocked when placed but explodes (after 5 clicks)
+  Naturally: false
 
 #IMPORTANT: THIS IS A BUGFIX
 #If you enter a world that is in this list, you will be teleported to the spawnpoint to fix the bug! (with the modified coordinates)
@@ -137,4 +172,4 @@ AutoUpdater: true
 
 #DO NOT CHANGE THIS
 #IF YOU CHANGE THIS THE WHOLE CONFIG WILL BE RESET
-config-version: 1.0.1
+config-version: 1.1

@@ -24,7 +24,7 @@ public class AutoUpdater {
     private boolean sent = false;
 
     //CHANGE THIS EVERY VERSION EVERY CONFIGUPDATE
-    private String newconfigversion = "1.0.1";
+    private String newconfigversion = "1.1";
 
 
     public AutoUpdater(OneBedPerWorld plugin){
@@ -162,9 +162,9 @@ public class AutoUpdater {
                     private OneBedPerWorld plugin = AutoUpdater.this.plugin;
                     @Override
                     public void run() {
+                        plugin.saveDefaultConfig();
                         ConfigHandler config = OneBedPerWorld.getPlugin().getConfigFile();
                         //Reload BUGFIX
-                        config.save();
                         config.reload();
                         //Copy datas
                         for (String save : quicksave.keySet()) {
@@ -176,7 +176,7 @@ public class AutoUpdater {
                         //Replacing old settings with new
                         Bukkit.getConsoleSender().sendMessage(ChatColor.GREEN + "Config got updated!");
                     }
-                }, 10);
+                }, 20);
             }else{
                 Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "No Config found! Creating a new one...");
                 //Create new Config
