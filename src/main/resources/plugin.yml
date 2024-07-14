@@ -1,7 +1,7 @@
 name: OneBedPerWorld
-version: 1.2
+version: 1.3
 main: dev.timecoding.onebedperworld.OneBedPerWorld
-api-version: 1.16
+api-version: 1.13
 authors: [ TimeCoding ]
 description: You're able to have one bed per world
 website: timecodeyt.de

@@ -86,7 +86,7 @@ Commands:
   #Command: /obpw help
   help:
     Permission: obpw.help
-    Message: "&eCommands: &a/obpw reload, /obpw help"
+    Message: "&eCommands: &a/obpw reload &7- Reloads the config.yml, &a/obpw help &7- Opens the help-page, &a/obpw deletecache <Player> <BED/ANCHOR> <WORLD> &7- Deletes the cache of the bed or anchor in a specific world"
   #Command: /obpw deletecache <Player> <Type> <World>
   deletecache:
     Permission: obpw.cache
@@ -172,4 +172,4 @@ AutoUpdater: true
 
 #DO NOT CHANGE THIS
 #IF YOU CHANGE THIS THE WHOLE CONFIG WILL BE RESET
-config-version: 1.1
+config-version: 1.2
