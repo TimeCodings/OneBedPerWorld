@@ -10,12 +10,15 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.RespawnAnchor;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityPortalEnterEvent;
+import org.bukkit.event.entity.EntityPortalExitEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -31,13 +34,14 @@ public class BedListener implements Listener {
     private ConfigHandler cfg = plugin.getConfigFile();
     private boolean enabled = cfg.getConfig().getBoolean("Enabled");
 
+    private List<Player> killList = new ArrayList<>();
+
     @EventHandler
     public void onWorldChange(PlayerChangedWorldEvent e){
         Player p = e.getPlayer();
-
         boolean enabled = cfg.getConfig().getBoolean("TeleportToSpawn.Enabled");
         List<String> worlds = cfg.getConfig().getStringList("TeleportToSpawn.Worlds");
-        if(enabled){
+        if(enabled && !killList.contains(p)){
             if(worlds.contains(p.getWorld().getName())){
                 World currentworld = p.getWorld();
 
@@ -56,6 +60,24 @@ public class BedListener implements Listener {
 
                 p.teleport(new Location(currentworld.getSpawnLocation().getWorld(), currentworld.getSpawnLocation().getX()+x, currentworld.getSpawnLocation().getY()+y, currentworld.getSpawnLocation().getZ()+z));
             }
+        }else killList.remove(p);
+    }
+
+    @EventHandler
+    public void onPlayerPortalEnter(EntityPortalEnterEvent event){
+        if(event.getEntity().getType() == EntityType.PLAYER) {
+            Player player = (Player) event.getEntity();
+            if (!killList.contains(player)){
+                killList.add(player);
+            }
+        }
+    }
+
+    @EventHandler
+    public void onPlayerPortalExit(EntityPortalExitEvent event){
+        if(event.getEntity().getType() == EntityType.PLAYER) {
+            Player player = (Player) event.getEntity();
+            killList.remove(player);
         }
     }
 
